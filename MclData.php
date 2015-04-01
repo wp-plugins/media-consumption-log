@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -98,14 +98,14 @@ class MclData {
                     <tr>
                         <th scope="row"><?php _e( 'Posts', 'media-consumption-log' ); ?></th>
                         <td><?php
-                            foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
-                                edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
+                    foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
+                        edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
 
-                                if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
-                                    echo "<br />";
-                                }
-                            }
-                            ?></td>
+                        if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
+                            echo "<br />";
+                        }
+                    }
+                    ?></td>
                     </tr>   
                 <?php } ?>
             </table>
@@ -153,6 +153,7 @@ class MclData {
         // Get the number of days since first post
         $date_current = new DateTime( date( 'Y-m-d' ) );
         $number_of_days = $date_current->diff( $first_post_date )->format( "%a" ) + 1;
+        $data->number_of_days = $number_of_days;
 
         // Total consumption of category
         $consumption_total = 0;
@@ -437,5 +438,3 @@ class MclData {
     }
 
 }
-
-?>

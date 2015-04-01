@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ class MclStatus {
                     . "\n  </tr>";
 
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -97,7 +97,7 @@ class MclStatus {
                     . "\n  </tr>";
 
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_non_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_non_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -133,7 +133,7 @@ class MclStatus {
 
             // Create the tables
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -257,7 +257,7 @@ class MclStatus {
 
             // Create the tables
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_non_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_non_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -332,5 +332,3 @@ class MclStatus {
     }
 
 }
-
-?>
