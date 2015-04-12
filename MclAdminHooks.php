@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,6 +33,23 @@ class MclAdminHooks {
         add_action( 'before_delete_post', array( get_called_class(), 'before_delete_post' ) );
 
         add_filter( 'load-post-new.php', array( get_called_class(), 'load_post_new_php' ) );
+
+        add_action( 'admin_enqueue_scripts', array( get_called_class(), 'admin_enqueue_scripts' ) );
+
+        add_action( 'wp_ajax_mcl_complete', array( 'MclComplete', 'change_complete_status' ) );
+        add_action( 'wp_ajax_mcl_quick_post_next', array( 'MclQuickPost', 'post_next' ) );
+        add_action( 'wp_ajax_mcl_quick_post_new', array( 'MclQuickPost', 'post_new' ) );
+    }
+
+    public static function admin_enqueue_scripts( $hook ) {
+        if ( strpos( $hook, 'mcl-quick-post' ) + strpos( $hook, 'mcl-complete' ) + strpos( $hook, 'mcl-forgotten' ) == 0 ) {
+            return;
+        }
+
+        wp_enqueue_script( 'mcl_admin_js', plugin_dir_url( __FILE__ ) . 'js/mcl_admin.js' );
+        wp_localize_script( 'mcl_admin_js', 'mcl_js_strings', array( 'title_empty_error' => __( 'Title can\'t be empty!', 'media-consumption-log' ) ) );
+
+        wp_enqueue_style( 'mcl_admin_css', plugin_dir_url( __FILE__ ) . 'css/mcl_admin.css' );
     }
 
     public static function admin_init() {
@@ -45,6 +62,7 @@ class MclAdminHooks {
         add_menu_page( 'MCL', 'MCL', 'manage_options', 'mcl-quick-post' );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Quick Post', 'media-consumption-log' ), __( 'Quick Post', 'media-consumption-log' ), 'manage_options', 'mcl-quick-post', array( 'MclQuickPost', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Complete', 'media-consumption-log' ), __( 'Complete', 'media-consumption-log' ), 'manage_options', 'mcl-complete', array( 'MclComplete', 'create_page' ) );
+        add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Forgotten', 'media-consumption-log' ), __( 'Forgotten', 'media-consumption-log' ), 'manage_options', 'mcl-forgotten', array( 'MclForgotten', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Units', 'media-consumption-log' ), __( 'Units', 'media-consumption-log' ), 'manage_options', 'mcl-unit', array( 'MclUnits', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Data', 'media-consumption-log' ), __( 'Data', 'media-consumption-log' ), 'manage_options', 'mcl-rebuild-data', array( 'MclData', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Settings', 'media-consumption-log' ), __( 'Settings', 'media-consumption-log' ), 'manage_options', 'mcl-settings', array( 'MclSettings', 'create_page' ) );
@@ -135,5 +153,3 @@ class MclAdminHooks {
     }
 
 }
-
-?>

@@ -4,23 +4,24 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media consumption log, track, tv shows, movies, books, comics, games, serials, media
 Requires at least: 3.8
 Tested up to: 4.1.1
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
+
 
 == Description ==
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
 
-**This plugin uses categories and tags to track the serials. So please read the full description to learn how to use it.**
+**This plugin uses categories and tags to track the serials and non serials. So please read the full description to learn how to use it.**
 
 There are two kind of tracked categories:
 
 * **Serials** are for tv shows and other things which have more than one part.
 * **Non serials** are for games or books which have only one part.
 
-Serials are separated by the tag.
+Serials and non serials are separated by the tag.
 
 = Status =
 The status page shows a list of all the the serials and non serials. Serials are separated in running and complete serials. Running serials also show the last consumed part.
@@ -44,6 +45,9 @@ In Quick post you can easily create a new post for a running serial. Check the s
 = Complete =
 Here you can set a serial as complete. Complete serials will not show up in Quick post and also will be separated on the status page.
 
+= Forgotten =
+Shows serials which haven't got a new post in the last 91 days (The number of days can be changed in the settings).
+
 = Unit =
 Here you can set units for serial which will be used in the statistics.
 
@@ -57,8 +61,8 @@ Here you can change the options of the plugin.
 Here is an example how to use this plugin:
 
 1. Create the category "TV Shows".
-2. Add the created category in the Site Admin -> MCL -> Settings -> Monitored categories -> Series (You must enter the ID of the category).
-3. Create a new post in this category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
+1. Add the created category in the Site Admin -> MCL -> Settings -> Monitored categories -> Series (You must enter the ID of the category).
+1. Create a new post in this category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
 
 When you watched the second episode, you can go to the Site Admin -> MCL -> Quick Post and there you can see that their is an entry for Boston Legal. Also an link to post "Boston Legal - Episode S01E02". When you click it, it automatically creates an new empty post in the "TV Shows" category with the title "Boston Legal - Episode S01E02" and the tag "Boston Legal". When you want to add some text to the post you can click on "Edit before posting" and you are forwarded to the new post page where the title, tag and the category are already set.
 
@@ -71,7 +75,7 @@ Boston Legal - Episode S01E01
 * **Status unit**: "Episode"
 * **Status**: "S01E01"
 
-In Quick Post you also can create a new serial. For each category at the beginning there are two text fields. Title and Text. When you set the title "Dexter - S01E01" and publish it a new post is created with the set title, "Dexter" will be set as tag and the category will also be set.
+In Quick Post you also can create a new serial. For each category at the beginning there are two text fields. Title and Text. When you set the title "Dexter - Episode S01E01" and publish it a new post is created with the set title, "Dexter" will be set as tag and the category will also be set.
  
 = mcl_number =
 When a post is created in a monitored category, the custom field "mcl_number" is added. You can set the mcl_number manually or it is set automatically for you.
@@ -90,6 +94,9 @@ You can also set it to 0. So the post will not be visible in the statistics. Thi
 
 = Other features =
 The plugin also support comma in tags. When you create a new tag with a comma, replace ", " with "--". It will automatically will be replaced in the frontend.
+
+= Support =
+If you have a problem, question or suggestion please post it on the [plugins github page](https://github.com/hurik/wordpress-media-consumption-log) or write me an [email](mailto:andreas@giemza.net).
 
 
 == Installation ==
@@ -119,12 +126,21 @@ No questions at the moment.
 6. Statistics - Consumption amount
 7. Quick Post
 8. Complete
-9. Unit
-10. Data
-11. Settings
+9. Forgotten
+10. Unit
+11. Data
+12. Settings
 
 
 == Changelog ==
+
+= 1.1.0 =
+* Added Forgotten
+* Data is now rebuild after updating to prevent errors
+
+= 1.0.2 =
+* Simplified Quick Post and Complete
+* A lot of improvements in the background
 
 = 1.0.1 =
 * Fixed readme.txt

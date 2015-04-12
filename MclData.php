@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,18 @@ class MclData {
             add_option( self::option_name, self::build_data(), null, 'no' );
         }
 
-        return get_option( self::option_name );
+        $data = get_option( self::option_name );
+
+        if ( $data->plugin_version != PLUGIN_VERSION ) {
+            // Build new data
+            $new_data = self::build_data();
+            // Save the new data
+            update_option( self::option_name, $new_data );
+            // Return the new data
+            return $new_data;
+        }
+
+        return $data;
     }
 
     public static function update_data() {
@@ -120,6 +131,8 @@ class MclData {
 
         $data = new stdClass;
 
+        $data->plugin_version = PLUGIN_VERSION;
+
         // Get the categories
         $monitored_categories_serials = MclSettings::get_monitored_categories_serials();
         $monitored_categories_non_serials = MclSettings::get_monitored_categories_non_serials();
@@ -153,6 +166,7 @@ class MclData {
         // Get the number of days since first post
         $date_current = new DateTime( date( 'Y-m-d' ) );
         $number_of_days = $date_current->diff( $first_post_date )->format( "%a" ) + 1;
+        $data->number_of_days = $number_of_days;
 
         // Total consumption of category
         $consumption_total = 0;
@@ -437,5 +451,3 @@ class MclData {
     }
 
 }
-
-?>

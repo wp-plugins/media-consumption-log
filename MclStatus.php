@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ class MclStatus {
                     . "\n  </tr>";
 
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -97,7 +97,7 @@ class MclStatus {
                     . "\n  </tr>";
 
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_non_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_non_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -133,7 +133,7 @@ class MclStatus {
 
             // Create the tables
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -178,7 +178,7 @@ class MclStatus {
                         foreach ( $category->mcl_tags_ongoing[$key] as $tag ) {
                             $href_tag_title = htmlspecialchars( htmlspecialchars_decode( $tag->name ) );
                             $href_post_title = htmlspecialchars( htmlspecialchars_decode( $tag->post_title ) );
-                            $lastConsumed = self::get_last_consumed( $tag->post_title );
+                            $lastConsumed = MclHelper::get_last_consumed( $tag->post_title );
 
                             if ( $first ) {
                                 $html .= "\n  <tr>"
@@ -257,7 +257,7 @@ class MclStatus {
 
             // Create the tables
             foreach ( $data->categories as $category ) {
-                if ( !in_array( $category->term_id, explode( ",", MclSettings::get_monitored_categories_non_serials() ) ) ) {
+                if ( !MclHelper::is_monitored_non_serial_category( $category->term_id ) ) {
                     continue;
                 }
 
@@ -321,16 +321,4 @@ class MclStatus {
         return $html;
     }
 
-    private static function get_last_consumed( $title ) {
-        $last_post_data = MclHelper::parse_last_post_title( $title );
-
-        if ( count( $last_post_data ) == 2 ) {
-            return $last_post_data[1];
-        }
-
-        return $last_post_data[1] . " " . $last_post_data[2];
-    }
-
 }
-
-?>
