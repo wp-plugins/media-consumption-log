@@ -55,7 +55,7 @@ class MclForgotten {
 
             $nav .= "<a href=\"#mediastatus-{$category->slug}\">{$category->name}</a>";
 
-            $html .= "\n\n<div class=\"anchor\" id=\"mediastatus-{$category->slug}\"></div><h3>{$category->name}</h3><hr />"
+            $html .= "\n\n<div class=\"anchor\" id=\"mediastatus-{$category->slug}\"></div><h3>{$category->name} (" . count( $tags ) . ")</h3><hr />"
                     . "\n<table class=\"widefat\">"
                     . "\n  <colgroup>"
                     . "\n    <col width=\"49%\">"
@@ -109,10 +109,10 @@ class MclForgotten {
 
             <div class="mcl_css_back_to_top">^</div>
         </div><?php
-    }
+        }
 
-    private static function nothing_here_yet() {
-        ?><div class="wrap">
+        private static function nothing_here_yet() {
+            ?><div class="wrap">
             <h2>Media Consumption Log - <?php _e( 'Forgotten', 'media-consumption-log' ); ?></h2>
             <p><strong><?php _e( 'Nothing here yet!', 'media-consumption-log' ); ?></strong></p>
         </div><?php
@@ -176,8 +176,8 @@ class MclForgotten {
                                 AND dt2.term_id = t2.term_id)
                     ORDER BY post_date
                 ) AS temp
-            LEFT JOIN {$wpdb->prefix}mcl_complete AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
-            WHERE IFNULL(complete, 0) = 0
+            LEFT JOIN {$wpdb->prefix}mcl_status AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
+            WHERE IFNULL(status, 0) = 0
 	" );
 
         return $tags;

@@ -36,13 +36,13 @@ class MclAdminHooks {
 
         add_action( 'admin_enqueue_scripts', array( get_called_class(), 'admin_enqueue_scripts' ) );
 
-        add_action( 'wp_ajax_mcl_complete', array( 'MclComplete', 'change_complete_status' ) );
+        add_action( 'wp_ajax_mcl_complete', array( 'MclSerialStatus', 'change_complete_status' ) );
         add_action( 'wp_ajax_mcl_quick_post_next', array( 'MclQuickPost', 'post_next' ) );
         add_action( 'wp_ajax_mcl_quick_post_new', array( 'MclQuickPost', 'post_new' ) );
     }
 
     public static function admin_enqueue_scripts( $hook ) {
-        if ( strpos( $hook, 'mcl-quick-post' ) + strpos( $hook, 'mcl-complete' ) + strpos( $hook, 'mcl-forgotten' ) == 0 ) {
+        if ( strpos( $hook, 'mcl-quick-post' ) + strpos( $hook, 'mcl-serial-status' ) + strpos( $hook, 'mcl-forgotten' ) == 0 ) {
             return;
         }
 
@@ -61,7 +61,7 @@ class MclAdminHooks {
         // Add menu
         add_menu_page( 'MCL', 'MCL', 'manage_options', 'mcl-quick-post' );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Quick Post', 'media-consumption-log' ), __( 'Quick Post', 'media-consumption-log' ), 'manage_options', 'mcl-quick-post', array( 'MclQuickPost', 'create_page' ) );
-        add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Complete', 'media-consumption-log' ), __( 'Complete', 'media-consumption-log' ), 'manage_options', 'mcl-complete', array( 'MclComplete', 'create_page' ) );
+        add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Serial Status', 'media-consumption-log' ), __( 'Serial Status', 'media-consumption-log' ), 'manage_options', 'mcl-serial-status', array( 'MclSerialStatus', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Forgotten', 'media-consumption-log' ), __( 'Forgotten', 'media-consumption-log' ), 'manage_options', 'mcl-forgotten', array( 'MclForgotten', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Units', 'media-consumption-log' ), __( 'Units', 'media-consumption-log' ), 'manage_options', 'mcl-unit', array( 'MclUnits', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Data', 'media-consumption-log' ), __( 'Data', 'media-consumption-log' ), 'manage_options', 'mcl-rebuild-data', array( 'MclData', 'create_page' ) );
@@ -87,9 +87,11 @@ class MclAdminHooks {
     public static function transition_post_status( $new_status, $old_status, $post ) {
         $cats = get_the_category( $post->ID );
 
-        if ( MclHelper::is_monitored_category( $cats[0]->term_id ) ) {
-            if ( ($old_status == 'publish' && $new_status != 'publish' ) ) {
-                MclData::update_data();
+        if ( count( $cats ) != 0 ) {
+            if ( MclHelper::is_monitored_category( $cats[0]->term_id ) ) {
+                if ( ($old_status == 'publish' && $new_status != 'publish' ) ) {
+                    MclData::update_data();
+                }
             }
         }
     }
@@ -97,8 +99,10 @@ class MclAdminHooks {
     public static function before_delete_post( $post_id ) {
         $cats = get_the_category( $post_id );
 
-        if ( MclHelper::is_monitored_category( $cats[0]->term_id ) ) {
-            add_action( 'delete_post', array( get_called_class(), 'delete_post' ) );
+        if ( count( $cats ) != 0 ) {
+            if ( MclHelper::is_monitored_category( $cats[0]->term_id ) ) {
+                add_action( 'delete_post', array( get_called_class(), 'delete_post' ) );
+            }
         }
     }
 
@@ -127,7 +131,14 @@ class MclAdminHooks {
     public static function register_activation_hook() {
         global $wpdb;
 
-        $table_name = $wpdb->prefix . 'mcl_complete';
+        // Update DB from version 1 to 2
+        if ( get_option( 'mcl_db_version' ) == 1 ) {
+            $wpdb->query( "RENAME TABLE `{$wpdb->prefix}mcl_complete` TO `wp_mcl_status`" );
+            $wpdb->query( "ALTER TABLE `{$wpdb->prefix}mcl_status` CHANGE `complete` `status` TINYINT(1) NOT NULL" );
+            update_option( 'mcl_db_version', 2 );
+        }
+
+        $table_name = $wpdb->prefix . 'mcl_status';
 
         if ( $wpdb->get_var( "SHOW TABLES LIKE {$table_name}" ) != $table_name ) {
             $charset_collate = "DEFAULT CHARACTER SET {$wpdb->charset}";
@@ -137,18 +148,18 @@ class MclAdminHooks {
             }
 
             $sql = "
-            CREATE TABLE {$table_name} (
-                `tag_id` bigint(20) unsigned NOT NULL,
-                `cat_id` bigint(20) unsigned NOT NULL,
-                `complete` tinyint(1) NOT NULL,
-                PRIMARY KEY (`tag_id`,`cat_id`)
-            ) $charset_collate;
-        ";
+                CREATE TABLE {$table_name} (
+                    `tag_id` bigint(20) unsigned NOT NULL,
+                    `cat_id` bigint(20) unsigned NOT NULL,
+                    `status` tinyint(1) NOT NULL,
+                    PRIMARY KEY (`tag_id`,`cat_id`)
+                ) $charset_collate;
+            ";
 
             require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
             dbDelta( $sql );
 
-            add_option( 'mcl_db_version', 1 );
+            add_option( 'mcl_db_version', 2 );
         }
     }
 
