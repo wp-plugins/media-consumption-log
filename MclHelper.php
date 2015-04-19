@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -47,6 +47,16 @@ class MclHelper {
         }
 
         return $categories_string;
+    }
+
+    public static function get_last_consumed( $title ) {
+        $last_post_data = self::parse_last_post_title( $title );
+
+        if ( count( $last_post_data ) == 2 ) {
+            return $last_post_data[1];
+        }
+
+        return $last_post_data[1] . " " . $last_post_data[2];
     }
 
     public static function parse_last_post_title( $last_post_title ) {
@@ -100,5 +110,3 @@ class MclHelper {
     }
 
 }
-
-?>

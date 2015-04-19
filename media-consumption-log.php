@@ -4,7 +4,7 @@
   Plugin Name: Media Consumption Log
   Plugin URI: https://github.com/hurik/wordpress-media-consumption-log
   Description: This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
-  Version: 1.0.1
+  Version: 1.2.0
   Author: Andreas Giemza
   Author URI: http://www.andreasgiemza.de
   License: MIT
@@ -13,7 +13,7 @@
  */
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,19 +30,20 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-require_once dirname( __FILE__ ) . '/admin/MclAdminHooks.php';
-require_once dirname( __FILE__ ) . '/admin/MclComplete.php';
-require_once dirname( __FILE__ ) . '/admin/MclNumber.php';
-require_once dirname( __FILE__ ) . '/admin/MclQuickPost.php';
-require_once dirname( __FILE__ ) . '/admin/MclData.php';
-require_once dirname( __FILE__ ) . '/admin/MclSettings.php';
-require_once dirname( __FILE__ ) . '/admin/MclUnits.php';
-require_once dirname( __FILE__ ) . '/helpers/MclHelper.php';
+define( 'PLUGIN_VERSION', '1.2.0' );
+
+require_once dirname( __FILE__ ) . '/MclAdminHooks.php';
 require_once dirname( __FILE__ ) . '/MclCommaInTags.php';
+require_once dirname( __FILE__ ) . '/MclData.php';
+require_once dirname( __FILE__ ) . '/MclForgotten.php';
+require_once dirname( __FILE__ ) . '/MclHelper.php';
 require_once dirname( __FILE__ ) . '/MclHooks.php';
+require_once dirname( __FILE__ ) . '/MclNumber.php';
+require_once dirname( __FILE__ ) . '/MclQuickPost.php';
+require_once dirname( __FILE__ ) . '/MclSerialStatus.php';
+require_once dirname( __FILE__ ) . '/MclSettings.php';
 require_once dirname( __FILE__ ) . '/MclStatistics.php';
 require_once dirname( __FILE__ ) . '/MclStatus.php';
+require_once dirname( __FILE__ ) . '/MclUnits.php';
 
 register_activation_hook( __FILE__, array( 'MclAdminHooks', 'register_activation_hook' ) );
-
-?>
