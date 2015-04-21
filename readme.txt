@@ -3,8 +3,8 @@ Contributors: hurik
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W3KL56CXEGRTN
 Tags: media consumption log, track, tv shows, movies, books, comics, games, serials, media
 Requires at least: 3.8
-Tested up to: 4.1.1
-Stable tag: 1.2.1
+Tested up to: 4.2
+Stable tag: 1.2.2
 License: GPLv2 or later
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
@@ -21,10 +21,10 @@ There are two kind of tracked categories:
 * **Serials** are for tv shows and other things which have more than one part.
 * **Non serials** are for games or books which have only one part.
 
-Serials and non serials are separated by the tag.
+Different serials and non serials are separated by the tag.
 
 = Status =
-The status page shows a list of all the the serials and non serials. Serials are separated in running and complete serials. Running serials also show the last consumed part.
+The status page shows a list of all the the serials and non serials. Serials are separated in running, complete or abandoned serials.
 
 To create a status page make a new site and add the shortcode "[mcl]" to it.
 
@@ -43,7 +43,7 @@ To create a statistics page make a new site and add the shortcode "[mcl-stats]" 
 In Quick post you can easily create a new post for a running serial. Check the screenshots for example.
 
 = Serial Status =
-Here you can set a serial as complete or abandoned. Complete and abandoned serials will not show up in Quick post and also will be separated on the status page.
+Here you can set a serial to complete or abandoned. Complete and abandoned serials will not show up in Quick post and also will be separated on the status page.
 
 = Forgotten =
 Shows serials which haven't got a new post in the last 91 days (The number of days can be changed in the settings).
@@ -52,7 +52,7 @@ Shows serials which haven't got a new post in the last 91 days (The number of da
 Here you can set units for serial which will be used in the statistics.
 
 = Data =
-Sometimes it is necessary to rebuild the saved data, because you renamed a category. This is normally not necessary because every time you create a new post or edit a post the data is rebuild. The data is used for the Status, Statistics, Quick Post and Complete.
+Sometimes it is necessary to rebuild the saved data, because you renamed a category. This is normally not necessary because every time you create a new post or edit a post the data is rebuild. The data is used for the Status, Statistics, Quick Post and Complete pages.
 
 = Settings =
 Here you can change the options of the plugin.
@@ -62,7 +62,7 @@ Here is an example how to use this plugin:
 
 1. Create the category "TV Shows".
 1. Add the created category in the Site Admin -> MCL -> Settings -> Monitored categories -> Series (You must enter the ID of the category).
-1. Create a new post in this category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
+1. Create a new post in the new category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
 
 When you watched the second episode, you can go to the Site Admin -> MCL -> Quick Post and there you can see that their is an entry for Boston Legal. Also an link to post "Boston Legal - Episode S01E02". When you click it, it automatically creates an new empty post in the "TV Shows" category with the title "Boston Legal - Episode S01E02" and the tag "Boston Legal". When you want to add some text to the post you can click on "Edit before posting" and you are forwarded to the new post page where the title, tag and the category are already set.
 
@@ -119,20 +119,21 @@ No questions at the moment.
 == Screenshots ==
 
 1. Status
-2. Statistics - Daily consumption
-3. Statistics - Monthly consumption
-4. Statistics - Total consumption
-5. Statistics - Average consumption
-6. Statistics - Consumption amount
-7. Quick Post
-8. Serial Status
-9. Forgotten
-10. Unit
-11. Data
-12. Settings
+2. Statistics
+3. Quick Post
+4. Serial Status
+5. Forgotten
+6. Units
+7. Data
+8. Settings
 
 
 == Changelog ==
+
+= 1.2.2 =
+* Readme and screenshots improved
+* Tested up to changed to 4.2
+* Default time format for Daily consumption changed
 
 = 1.2.1 =
 * Database wasn't updated to version 2
