@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,18 @@ class MclData {
             add_option( self::option_name, self::build_data(), null, 'no' );
         }
 
-        return get_option( self::option_name );
+        $data = get_option( self::option_name );
+
+        if ( $data->plugin_version != PLUGIN_VERSION ) {
+            // Build new data
+            $new_data = self::build_data();
+            // Save the new data
+            update_option( self::option_name, $new_data );
+            // Return the new data
+            return $new_data;
+        }
+
+        return $data;
     }
 
     public static function update_data() {
@@ -40,7 +51,7 @@ class MclData {
 
     public static function create_page() {
         if ( !current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'media-consumption-log' ) );
         }
 
         if ( isset( $_GET["rebuild-data"] ) && $_GET["rebuild-data"] == 1 ) {
@@ -98,14 +109,14 @@ class MclData {
                     <tr>
                         <th scope="row"><?php _e( 'Posts', 'media-consumption-log' ); ?></th>
                         <td><?php
-                            foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
-                                edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
+                    foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
+                        edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
 
-                                if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
-                                    echo "<br />";
-                                }
-                            }
-                            ?></td>
+                        if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
+                            echo "<br />";
+                        }
+                    }
+                    ?></td>
                     </tr>   
                 <?php } ?>
             </table>
@@ -119,6 +130,8 @@ class MclData {
         date_default_timezone_set( get_option( 'timezone_string' ) );
 
         $data = new stdClass;
+
+        $data->plugin_version = PLUGIN_VERSION;
 
         // Get the categories
         $monitored_categories_serials = MclSettings::get_monitored_categories_serials();
@@ -153,6 +166,7 @@ class MclData {
         // Get the number of days since first post
         $date_current = new DateTime( date( 'Y-m-d' ) );
         $number_of_days = $date_current->diff( $first_post_date )->format( "%a" ) + 1;
+        $data->number_of_days = $number_of_days;
 
         // Total consumption of category
         $consumption_total = 0;
@@ -160,9 +174,11 @@ class MclData {
 
         $tags_count_ongoing = 0;
         $tags_count_complete = 0;
+        $tags_count_abandoned = 0;
 
         $cat_serial_ongoing = false;
         $cat_serial_complete = false;
+        $cat_serial_abandoned = false;
         $cat_non_serial = false;
 
         $data->categories = array();
@@ -177,6 +193,7 @@ class MclData {
 
             $tags_count_ongoing += $category->mcl_tags_count_ongoing;
             $tags_count_complete += $category->mcl_tags_count_complete;
+            $tags_count_abandoned += $category->mcl_tags_count_abandoned;
 
             // Graph data
             $category->mcl_daily_data = self::get_mcl_number_count_of_category_sorted_by_day( $category->term_id, $first_date );
@@ -194,7 +211,11 @@ class MclData {
             }
 
             if ( MclHelper::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_complete > 0 ) {
-                $cat_serial_ongoing = true;
+                $cat_serial_complete = true;
+            }
+
+            if ( MclHelper::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_abandoned > 0 ) {
+                $cat_serial_abandoned = true;
             }
 
             if ( MclHelper::is_monitored_non_serial_category( $category->term_id ) && $category->mcl_tags_count_ongoing > 0 ) {
@@ -207,10 +228,12 @@ class MclData {
 
         $data->tags_count_ongoing = $tags_count_ongoing;
         $data->tags_count_complete = $tags_count_complete;
-        $data->tags_count_total = $tags_count_ongoing + $tags_count_complete;
+        $data->tags_count_abandoned = $tags_count_abandoned;
+        $data->tags_count_total = $tags_count_ongoing + $tags_count_complete + $tags_count_abandoned;
 
         $data->cat_serial_ongoing = $cat_serial_ongoing;
         $data->cat_serial_complete = $cat_serial_complete;
+        $data->cat_serial_abandoned = $cat_serial_abandoned;
         $data->cat_non_serial = $cat_non_serial;
 
         return $data;
@@ -227,7 +250,7 @@ class MclData {
                 temp.post_id,
                 temp.post_date,
                 temp.post_title,
-                IFNULL(mcl.complete, 0) AS complete
+                IFNULL(mcl.status, 0) AS status
             FROM
 		(
                     SELECT
@@ -274,13 +297,15 @@ class MclData {
                                 AND dt2.term_id = t2.term_id)
                     ORDER BY name
                 ) AS temp
-            LEFT JOIN {$wpdb->prefix}mcl_complete AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
+            LEFT JOIN {$wpdb->prefix}mcl_status AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
 	" );
 
         $tags_count_ongoing = 0;
         $tags_count_complete = 0;
+        $tags_count_abandoned = 0;
         $tags_ongoing = array();
         $tags_complete = array();
+        $tags_abandoned = array();
 
         foreach ( $tags as $tag ) {
             // Comma in tags
@@ -291,7 +316,7 @@ class MclData {
             // Get last post data
             $tag->post_link = get_permalink( $tag->post_id );
 
-            if ( $tag->complete == false ) {
+            if ( $tag->status == MclSerialStatus::RUNNING ) {
                 $tags_count_ongoing++;
 
                 // Tags which start with a number get their own group #
@@ -300,7 +325,7 @@ class MclData {
                 } else {
                     $tags_ongoing['#'][] = $tag;
                 }
-            } else {
+            } else if ( $tag->status == MclSerialStatus::COMPLETE ) {
                 $tags_count_complete++;
 
                 // Tags which start with a number get their own group #
@@ -309,15 +334,27 @@ class MclData {
                 } else {
                     $tags_complete['#'][] = $tag;
                 }
+            } else {
+                $tags_count_abandoned++;
+
+                // Tags which start with a number get their own group #
+                if ( preg_match( '/^[a-z]/i', trim( $tag->name[0] ) ) ) {
+                    $tags_abandoned[strtoupper( $tag->name[0] )][] = $tag;
+                } else {
+                    $tags_abandoned['#'][] = $tag;
+                }
             }
         }
 
         // Sort tag arrays
-        $category->mcl_tags_count = $tags_count_ongoing + $tags_count_complete;
         $category->mcl_tags_count_ongoing = $tags_count_ongoing;
         $category->mcl_tags_count_complete = $tags_count_complete;
+        $category->mcl_tags_count_abandoned = $tags_count_abandoned;
+        $category->mcl_tags_count = $tags_count_ongoing + $tags_count_complete + $tags_count_abandoned;
+
         $category->mcl_tags_ongoing = $tags_ongoing;
         $category->mcl_tags_complete = $tags_complete;
+        $category->mcl_tags_abandoned = $tags_abandoned;
 
         return $category;
     }
@@ -437,5 +474,3 @@ class MclData {
     }
 
 }
-
-?>
