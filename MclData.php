@@ -23,106 +23,41 @@ class MclData {
     const option_name = 'mcl_data';
 
     public static function get_data() {
-        if ( get_option( self::option_name ) === false ) {
-            add_option( self::option_name, self::build_data(), null, 'no' );
-        }
-
         $data = get_option( self::option_name );
 
-        if ( $data->plugin_version != PLUGIN_VERSION ) {
-            // Build new data
-            $new_data = self::build_data();
-            // Save the new data
-            update_option( self::option_name, $new_data );
-            // Return the new data
-            return $new_data;
+        if ( $data === false || $data->plugin_version != PLUGIN_VERSION ) {
+            return self::update_data();
+        }
+
+        return $data;
+    }
+
+    public static function get_data_up_to_date() {
+        $data = self::get_data();
+
+        // Set the default timezone
+        date_default_timezone_set( get_option( 'timezone_string' ) );
+        // Check if mcl_data is up to date
+        $date_current = new DateTime( date( 'Y-m-d' ) );
+        $number_of_days = $date_current->diff( $data->first_post_date )->format( "%a" ) + 1;
+
+        if ( $data->number_of_days != $number_of_days ) {
+            return self::update_data();
         }
 
         return $data;
     }
 
     public static function update_data() {
+        $data = self::build_data();
+
         if ( get_option( self::option_name ) !== false ) {
-            update_option( self::option_name, self::build_data() );
+            update_option( self::option_name, $data );
         } else {
-            add_option( self::option_name, self::build_data(), null, 'no' );
-        }
-    }
-
-    public static function create_page() {
-        if ( !current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You do not have sufficient permissions to access this page.', 'media-consumption-log' ) );
+            add_option( self::option_name, $data, null, 'no' );
         }
 
-        if ( isset( $_GET["rebuild-data"] ) && $_GET["rebuild-data"] == 1 ) {
-            self::update_data();
-        }
-
-        if ( isset( $_GET["remove-postmeta-orphans"] ) && $_GET["remove-postmeta-orphans"] == 1 ) {
-            self::remove_postmeta_orphans();
-        }
-
-        $postmeta_orphans_count = self::count_postmeta_orphans();
-        $posts_without_mcl_number = self::get_posts_without_mcl_number();
-        $posts_without_mcl_number_count = count( $posts_without_mcl_number );
-        ?>
-        <div class="wrap">
-            <h2>Media Consumption Log - <?php _e( 'Data', 'media-consumption-log' ); ?></h2>
-
-            <h3><?php _e( 'Rebuild data', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Rebuild data', 'media-consumption-log' ); ?></th>
-                    <td><input class="button-primary" type=button onClick="location.href = 'admin.php?page=mcl-rebuild-data&rebuild-data=1'" value="<?php _e( 'Now!', 'media-consumption-log' ); ?>" /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e( 'Number of queries', 'media-consumption-log' ); ?></th>
-                    <td><?php echo get_num_queries(); ?></td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e( 'Execution time', 'media-consumption-log' ); ?></th>
-                    <td><?php timer_stop( 1 ); ?></td>
-                </tr>
-            </table>
-
-            <h3><?php _e( 'Postmeta orphans', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Number of postmeta orphans', 'media-consumption-log' ); ?></th>
-                    <td><?php echo $postmeta_orphans_count; ?></td>
-                </tr>
-                <?php if ( $postmeta_orphans_count > 0 ) { ?>
-                    <tr>
-                        <th scope="row"><?php _e( 'Remove', 'media-consumption-log' ); ?></th>
-                        <td><input class="button-primary" type=button onClick="location.href = 'admin.php?page=mcl-rebuild-data&remove-postmeta-orphans=1'" value="<?php _e( 'Now!', 'media-consumption-log' ); ?>" /></td>
-                    </tr>
-                <?php } ?>
-            </table>
-
-            <h3><?php _e( 'Posts without mcl_number', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Number of posts without mcl_number', 'media-consumption-log' ); ?></th>
-                    <td><?php echo $posts_without_mcl_number_count; ?></td>
-                </tr>
-                <?php if ( $posts_without_mcl_number_count > 0 ) { ?>
-                    <tr>
-                        <th scope="row"><?php _e( 'Posts', 'media-consumption-log' ); ?></th>
-                        <td><?php
-                    foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
-                        edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
-
-                        if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
-                            echo "<br />";
-                        }
-                    }
-                    ?></td>
-                    </tr>   
-                <?php } ?>
-            </table>
-
-        </div>
-        <?php
+        return $data;
     }
 
     public static function build_data() {
@@ -414,63 +349,6 @@ class MclData {
 	" );
 
         return $stats[0]->number;
-    }
-
-    private static function count_postmeta_orphans() {
-        global $wpdb;
-
-        $postmeta_orphans = $wpdb->get_results( "
-            SELECT *
-            FROM {$wpdb->prefix}postmeta pm
-            LEFT JOIN {$wpdb->prefix}posts wp ON wp.ID = pm.post_id
-            WHERE wp.ID IS NULL
-	" );
-
-        return count( $postmeta_orphans );
-    }
-
-    private static function remove_postmeta_orphans() {
-        global $wpdb;
-
-        $wpdb->get_results( "
-            DELETE pm
-            FROM {$wpdb->prefix}postmeta pm
-            LEFT JOIN {$wpdb->prefix}posts wp ON wp.ID = pm.post_id
-            WHERE wp.ID IS NULL
-	" );
-    }
-
-    private static function get_posts_without_mcl_number() {
-        global $wpdb;
-
-        $monitored_categories_serials = MclSettings::get_monitored_categories_serials();
-        $monitored_categories_non_serials = MclSettings::get_monitored_categories_non_serials();
-
-        if ( !empty( $monitored_categories_serials ) && !empty( $monitored_categories_non_serials ) ) {
-            $monitored_categories = MclSettings::get_monitored_categories_serials() . "," . MclSettings::get_monitored_categories_non_serials();
-
-            $posts_without_mcl_number = $wpdb->get_results( "
-            SELECT *
-            FROM {$wpdb->prefix}posts as p
-            LEFT JOIN {$wpdb->prefix}term_relationships AS r ON p.ID = r.object_ID
-            LEFT JOIN {$wpdb->prefix}term_taxonomy AS t ON r.term_taxonomy_id = t.term_taxonomy_id
-            WHERE
-                p.post_type = 'post'
-                AND p.post_status = 'publish'
-                AND t.taxonomy = 'category'
-                AND t.term_id IN ({$monitored_categories})
-                AND NOT EXISTS (
-                    SELECT *
-                    FROM {$wpdb->prefix}postmeta
-                    WHERE meta_key = 'mcl_number'
-                    AND post_id = p.ID
-                )
-	" );
-
-            return $posts_without_mcl_number;
-        } else {
-            return array();
-        }
     }
 
 }

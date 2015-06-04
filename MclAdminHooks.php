@@ -34,6 +34,8 @@ class MclAdminHooks {
         add_action( 'transition_post_status', array( get_called_class(), 'transition_post_status' ), 10, 3 );
         add_action( 'before_delete_post', array( get_called_class(), 'before_delete_post' ) );
 
+        add_action( 'edit_term', array( get_called_class(), 'edit_term' ), 10, 3 );
+
         add_filter( 'load-post-new.php', array( get_called_class(), 'load_post_new_php' ) );
 
         add_action( 'admin_enqueue_scripts', array( get_called_class(), 'admin_enqueue_scripts' ) );
@@ -41,6 +43,7 @@ class MclAdminHooks {
         add_action( 'wp_ajax_mcl_complete', array( 'MclSerialStatus', 'change_complete_status' ) );
         add_action( 'wp_ajax_mcl_quick_post_next', array( 'MclQuickPost', 'post_next' ) );
         add_action( 'wp_ajax_mcl_quick_post_new', array( 'MclQuickPost', 'post_new' ) );
+        add_action( 'wp_ajax_mcl_rebuild_data', array( 'MclSettings', 'rebuild_data' ) );
     }
 
     public static function update_db_check() {
@@ -55,7 +58,10 @@ class MclAdminHooks {
     }
 
     public static function admin_enqueue_scripts( $hook ) {
-        if ( strpos( $hook, 'mcl-quick-post' ) + strpos( $hook, 'mcl-serial-status' ) + strpos( $hook, 'mcl-forgotten' ) == 0 ) {
+        if ( strpos( $hook, 'mcl-quick-post' ) +
+                strpos( $hook, 'mcl-serial-status' ) +
+                strpos( $hook, 'mcl-forgotten' ) +
+                strpos( $hook, 'mcl-settings' ) == 0 ) {
             return;
         }
 
@@ -75,7 +81,6 @@ class MclAdminHooks {
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Quick Post', 'media-consumption-log' ), __( 'Quick Post', 'media-consumption-log' ), 'manage_options', 'mcl-quick-post', array( 'MclQuickPost', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Serial Status', 'media-consumption-log' ), __( 'Serial Status', 'media-consumption-log' ), 'manage_options', 'mcl-serial-status', array( 'MclSerialStatus', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Forgotten', 'media-consumption-log' ), __( 'Forgotten', 'media-consumption-log' ), 'manage_options', 'mcl-forgotten', array( 'MclForgotten', 'create_page' ) );
-        add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Data', 'media-consumption-log' ), __( 'Data', 'media-consumption-log' ), 'manage_options', 'mcl-rebuild-data', array( 'MclData', 'create_page' ) );
         add_submenu_page( 'mcl-quick-post', 'MCL - ' . __( 'Settings', 'media-consumption-log' ), __( 'Settings', 'media-consumption-log' ), 'manage_options', 'mcl-settings', array( 'MclSettings', 'create_page' ) );
     }
 
@@ -119,6 +124,14 @@ class MclAdminHooks {
 
     public static function delete_post( $post_id ) {
         MclData::update_data();
+    }
+
+    public static function edit_term( $term_id, $tt_id, $taxonomy ) {
+        // Check if term is a category and if it is a monitored category
+        if ( $taxonomy == "category" && MclHelper::is_monitored_category( $term_id ) ) {
+            // Rebuild data to updated changed category in mcl_data
+            MclData::update_data();
+        }
     }
 
     public static function load_post_new_php( $post_id ) {

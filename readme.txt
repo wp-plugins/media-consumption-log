@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: media consumption log, track, tv shows, movies, books, comics, games, serials, media
 Requires at least: 3.8
 Tested up to: 4.2
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
@@ -48,11 +48,8 @@ Here you can set a serial to complete or abandoned. Complete and abandoned seria
 = Forgotten =
 Shows serials which haven't got a new post in the last 91 days (The number of days can be changed in the settings).
 
-= Data =
-Sometimes it is necessary to rebuild the saved data, because you renamed a category. This is normally not necessary because every time you create a new post or edit a post the data is rebuild. The data is used for the Status, Statistics, Quick Post and Complete pages.
-
 = Settings =
-Here you can change the options of the plugin.
+Here you can change the options of the plugin. You also can rebuild the data and see if there is a post without mcl number in the monitored categories.
 
 = How to use? =
 Here is an example how to use this plugin:
@@ -120,11 +117,18 @@ No questions at the moment.
 3. Quick Post
 4. Serial Status
 5. Forgotten
-6. Data
-7. Settings
+6. Settings
 
 
 == Changelog ==
+
+= 1.4.0 =
+* Removed "Remove postmeta orphans" from Data, use the plugin [WP-Sweep](https://wordpress.org/plugins/wp-sweep/)
+* Removed Data from admin menu and moved "Rebuild Data" and "Posts without mcl_number" to settings
+* Added nice statistics to "Rebuild data", used code from the plugin [WP Page Load Stats](https://wordpress.org/plugins/wp-page-load-stats/)
+* Data is rebuild on a new day in Statistics and Forgotten (when opened)
+* Data is rebuild when a monitored category is renamed
+* Some improvements and fixes in the background
 
 = 1.3.0 =
 * Fixed and improved Forgotten (The "Minimal count of days" setting wasn't working and it now uses MclData)
