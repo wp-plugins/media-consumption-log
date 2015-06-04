@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,20 +22,24 @@ class MclCommaInTags {
 
     public static function comma_tag_filter( $tag_arr ) {
         $tag_arr_new = $tag_arr;
-        if ( $tag_arr->taxonomy == 'post_tag' && strpos( $tag_arr->name, '--' ) ) {
+
+        if ( property_exists( $tag_arr, "taxonomy" ) &&
+                $tag_arr->taxonomy == 'post_tag' &&
+                strpos( $tag_arr->name, '--' ) ) {
             $tag_arr_new->name = str_replace( '--', ', ', $tag_arr->name );
         }
+
         return $tag_arr_new;
     }
 
     public static function comma_tags_filter( $tags_arr ) {
         $tags_arr_new = array();
+
         foreach ( $tags_arr as $tag_arr ) {
             $tags_arr_new[] = self::comma_tag_filter( $tag_arr );
         }
+
         return $tags_arr_new;
     }
 
 }
-
-?>
