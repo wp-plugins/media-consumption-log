@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ class MclHooks {
             add_filter( 'get_post_tag', array( 'MclCommaInTags', 'comma_tag_filter' ) );
             add_filter( 'get_terms', array( 'MclCommaInTags', 'comma_tags_filter' ) );
             add_filter( 'get_the_terms', array( 'MclCommaInTags', 'comma_tags_filter' ) );
+
+            add_filter( 'the_posts', array( get_called_class(), 'conditionally_add_style' ) );
         }
 
         add_action( 'admin_bar_menu', array( get_called_class(), 'admin_bar_menu' ), 75 );
@@ -51,6 +53,35 @@ class MclHooks {
         $wp_admin_bar->add_node( $args );
     }
 
-}
+    public static function conditionally_add_style( $posts ) {
+        if ( empty( $posts ) ) {
+            return $posts;
+        }
 
-?>
+        $shortcode_mcl = false;
+        $shortcode_mcl_stats = false;
+
+        foreach ( $posts as $post ) {
+            if ( !$shortcode_mcl && stripos( $post->post_content, '[mcl]' ) !== false ) {
+                $shortcode_mcl = true;
+            }
+
+            if ( !$shortcode_mcl_stats && stripos( $post->post_content, '[mcl-stats]' ) !== false ) {
+                $shortcode_mcl_stats = true;
+            }
+        }
+
+        if ( $shortcode_mcl ) {
+            wp_enqueue_script( 'mcl-back-to-top', plugin_dir_url( __FILE__ ) . 'js/mcl_back_to_top.js', array( 'jquery' ) );
+            wp_enqueue_style( 'mcl-back-to-top', plugin_dir_url( __FILE__ ) . 'css/mcl_back_to_top.css' );
+            wp_enqueue_style( 'mcl-table', plugin_dir_url( __FILE__ ) . 'css/mcl_table.css' );
+        }
+
+        if ( $shortcode_mcl_stats ) {
+            wp_enqueue_style( 'mcl-table', plugin_dir_url( __FILE__ ) . 'css/mcl_table.css' );
+        }
+
+        return $posts;
+    }
+
+}
