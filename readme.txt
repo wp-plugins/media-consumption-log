@@ -3,27 +3,28 @@ Contributors: hurik
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W3KL56CXEGRTN
 Tags: media consumption log, track, tv shows, movies, books, comics, games, serials, media
 Requires at least: 3.8
-Tested up to: 4.1.1
-Stable tag: 1.0.1
+Tested up to: 4.2
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
+
 
 == Description ==
 
 This plugin helps you to keep track of the tv shows, movies, books, comics, games and other things you are consuming.
 
-**This plugin uses categories and tags to track the serials. So please read the full description to learn how to use it.**
+**This plugin uses categories and tags to track the serials and non serials. So please read the full description to learn how to use it.**
 
 There are two kind of tracked categories:
 
 * **Serials** are for tv shows and other things which have more than one part.
 * **Non serials** are for games or books which have only one part.
 
-Serials are separated by the tag.
+Different serials and non serials are separated by the tag.
 
 = Status =
-The status page shows a list of all the the serials and non serials. Serials are separated in running and complete serials. Running serials also show the last consumed part.
+The status page shows a list of all the the serials and non serials. Serials are separated in running, complete or abandoned serials.
 
 To create a status page make a new site and add the shortcode "[mcl]" to it.
 
@@ -32,33 +33,32 @@ Contains the following statistics:
 
 * Daily consumption
 * Monthly consumption
+* Hourly consumption
 * Total consumption
 * Average consumption
 * Consumption amount
+* Most consumed
 
 To create a statistics page make a new site and add the shortcode "[mcl-stats]" to it.
 
 = Quick Post =
 In Quick post you can easily create a new post for a running serial. Check the screenshots for example.
 
-= Complete =
-Here you can set a serial as complete. Complete serials will not show up in Quick post and also will be separated on the status page.
+= Serial Status =
+Here you can set a serial to complete or abandoned. Complete and abandoned serials will not show up in Quick post and also will be separated on the status page.
 
-= Unit =
-Here you can set units for serial which will be used in the statistics.
-
-= Data =
-Sometimes it is necessary to rebuild the saved data, because you renamed a category. This is normally not necessary because every time you create a new post or edit a post the data is rebuild. The data is used for the Status, Statistics, Quick Post and Complete.
+= Forgotten =
+Shows serials which haven't got a new post in the last 91 days (The number of days can be changed in the settings).
 
 = Settings =
-Here you can change the options of the plugin.
+Here you can change the options of the plugin. You also can rebuild the data and see if there is a post without mcl number in the monitored categories.
 
 = How to use? =
 Here is an example how to use this plugin:
 
 1. Create the category "TV Shows".
-2. Add the created category in the Site Admin -> MCL -> Settings -> Monitored categories -> Series (You must enter the ID of the category).
-3. Create a new post in this category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
+1. Add the created category in the Site Admin -> MCL -> Settings -> Monitored categories -> Series (You must enter the ID of the category).
+1. Create a new post in the new category, with the title "Boston Legal - Episode S01E01" and the tag "Boston Legal".
 
 When you watched the second episode, you can go to the Site Admin -> MCL -> Quick Post and there you can see that their is an entry for Boston Legal. Also an link to post "Boston Legal - Episode S01E02". When you click it, it automatically creates an new empty post in the "TV Shows" category with the title "Boston Legal - Episode S01E02" and the tag "Boston Legal". When you want to add some text to the post you can click on "Edit before posting" and you are forwarded to the new post page where the title, tag and the category are already set.
 
@@ -71,7 +71,7 @@ Boston Legal - Episode S01E01
 * **Status unit**: "Episode"
 * **Status**: "S01E01"
 
-In Quick Post you also can create a new serial. For each category at the beginning there are two text fields. Title and Text. When you set the title "Dexter - S01E01" and publish it a new post is created with the set title, "Dexter" will be set as tag and the category will also be set.
+In Quick Post you also can create a new serial. For each category at the beginning there are two text fields. Title and Text. When you set the title "Dexter - Episode S01E01" and publish it a new post is created with the set title, "Dexter" will be set as tag and the category will also be set.
  
 = mcl_number =
 When a post is created in a monitored category, the custom field "mcl_number" is added. You can set the mcl_number manually or it is set automatically for you.
@@ -90,6 +90,9 @@ You can also set it to 0. So the post will not be visible in the statistics. Thi
 
 = Other features =
 The plugin also support comma in tags. When you create a new tag with a comma, replace ", " with "--". It will automatically will be replaced in the frontend.
+
+= Support =
+If you have a problem, question or suggestion please post it on the [plugins github page](https://github.com/hurik/wordpress-media-consumption-log) or write me an [email](mailto:andreas@giemza.net).
 
 
 == Installation ==
@@ -112,19 +115,62 @@ No questions at the moment.
 == Screenshots ==
 
 1. Status
-2. Statistics - Daily consumption
-3. Statistics - Monthly consumption
-4. Statistics - Total consumption
-5. Statistics - Average consumption
-6. Statistics - Consumption amount
-7. Quick Post
-8. Complete
-9. Unit
-10. Data
-11. Settings
+2. Statistics
+3. Quick Post
+4. Serial Status
+5. Forgotten
+6. Settings
 
 
 == Changelog ==
+
+= 1.6.0 =
+* Added Most consumed in Statistics
+* Fixed little bug in Settings
+
+= 1.5.0 =
+* Added Hourly consumption in Statistics
+
+= 1.4.1 =
+* Tables in Status, Statistics, Quick Post, Serial Status and Forgotten improved (Now better readable, and doesn't break the page width on mobile devices)
+* Data rebuild query count reduced (A little bit)
+* Settings improved
+* A lot of improvements and fixes in the background 
+
+= 1.4.0 =
+* Removed "Remove postmeta orphans" from Data, use the plugin [WP-Sweep](https://wordpress.org/plugins/wp-sweep/)
+* Removed Data from admin menu and moved "Rebuild Data" and "Posts without mcl_number" to settings
+* Added nice statistics to "Rebuild data", used code from the plugin [WP Page Load Stats](https://wordpress.org/plugins/wp-page-load-stats/)
+* Data is rebuild on a new day in Statistics and Forgotten (when opened)
+* Data is rebuild when a monitored category is renamed
+* Some improvements and fixes in the background
+
+= 1.3.0 =
+* Fixed and improved Forgotten (The "Minimal count of days" setting wasn't working and it now uses MclData)
+* Moved Units to Settings
+* Some improvements and fixes in the background
+
+= 1.2.2 =
+* Readme and screenshots improved
+* Tested up to changed to 4.2
+* Default time format for Daily consumption changed
+
+= 1.2.1 =
+* Database wasn't updated to version 2
+
+= 1.2.0 =
+* Renamed Complete to Serial Status and added abandoned
+* Added count to Forgotten
+* Fixed navigation in Status
+* Fixed possible PHP errors when category wasn't set in a new post
+
+= 1.1.0 =
+* Added Forgotten
+* Data is now rebuild after updating to prevent errors
+
+= 1.0.2 =
+* Simplified Quick Post and Complete
+* A lot of improvements in the background
 
 = 1.0.1 =
 * Fixed readme.txt

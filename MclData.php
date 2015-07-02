@@ -1,7 +1,7 @@
 <?php
 
 /*
-  Copyright (C) 2014 Andreas Giemza <andreas@giemza.net>
+  Copyright (C) 2014-2015 Andreas Giemza <andreas@giemza.net>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,95 +23,41 @@ class MclData {
     const option_name = 'mcl_data';
 
     public static function get_data() {
-        if ( get_option( self::option_name ) === false ) {
-            add_option( self::option_name, self::build_data(), null, 'no' );
+        $data = get_option( self::option_name );
+
+        if ( $data === false || $data->plugin_version != PLUGIN_VERSION ) {
+            return self::update_data();
         }
 
-        return get_option( self::option_name );
+        return $data;
+    }
+
+    public static function get_data_up_to_date() {
+        $data = self::get_data();
+
+        // Set the default timezone
+        date_default_timezone_set( get_option( 'timezone_string' ) );
+        // Check if mcl_data is up to date
+        $date_current = new DateTime( date( 'Y-m-d' ) );
+        $number_of_days = $date_current->diff( $data->first_post_date )->format( "%a" ) + 1;
+
+        if ( $data->number_of_days != $number_of_days ) {
+            return self::update_data();
+        }
+
+        return $data;
     }
 
     public static function update_data() {
+        $data = self::build_data();
+
         if ( get_option( self::option_name ) !== false ) {
-            update_option( self::option_name, self::build_data() );
+            update_option( self::option_name, $data );
         } else {
-            add_option( self::option_name, self::build_data(), null, 'no' );
-        }
-    }
-
-    public static function create_page() {
-        if ( !current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+            add_option( self::option_name, $data, null, 'no' );
         }
 
-        if ( isset( $_GET["rebuild-data"] ) && $_GET["rebuild-data"] == 1 ) {
-            self::update_data();
-        }
-
-        if ( isset( $_GET["remove-postmeta-orphans"] ) && $_GET["remove-postmeta-orphans"] == 1 ) {
-            self::remove_postmeta_orphans();
-        }
-
-        $postmeta_orphans_count = self::count_postmeta_orphans();
-        $posts_without_mcl_number = self::get_posts_without_mcl_number();
-        $posts_without_mcl_number_count = count( $posts_without_mcl_number );
-        ?>
-        <div class="wrap">
-            <h2>Media Consumption Log - <?php _e( 'Data', 'media-consumption-log' ); ?></h2>
-
-            <h3><?php _e( 'Rebuild data', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Rebuild data', 'media-consumption-log' ); ?></th>
-                    <td><input class="button-primary" type=button onClick="location.href = 'admin.php?page=mcl-rebuild-data&rebuild-data=1'" value="<?php _e( 'Now!', 'media-consumption-log' ); ?>" /></td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e( 'Number of queries', 'media-consumption-log' ); ?></th>
-                    <td><?php echo get_num_queries(); ?></td>
-                </tr>
-                <tr>
-                    <th scope="row"><?php _e( 'Execution time', 'media-consumption-log' ); ?></th>
-                    <td><?php timer_stop( 1 ); ?></td>
-                </tr>
-            </table>
-
-            <h3><?php _e( 'Postmeta orphans', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Number of postmeta orphans', 'media-consumption-log' ); ?></th>
-                    <td><?php echo $postmeta_orphans_count; ?></td>
-                </tr>
-                <?php if ( $postmeta_orphans_count > 0 ) { ?>
-                    <tr>
-                        <th scope="row"><?php _e( 'Remove', 'media-consumption-log' ); ?></th>
-                        <td><input class="button-primary" type=button onClick="location.href = 'admin.php?page=mcl-rebuild-data&remove-postmeta-orphans=1'" value="<?php _e( 'Now!', 'media-consumption-log' ); ?>" /></td>
-                    </tr>
-                <?php } ?>
-            </table>
-
-            <h3><?php _e( 'Posts without mcl_number', 'media-consumption-log' ); ?></h3>
-            <table class="form-table">
-                <tr>
-                    <th scope="row"><?php _e( 'Number of posts without mcl_number', 'media-consumption-log' ); ?></th>
-                    <td><?php echo $posts_without_mcl_number_count; ?></td>
-                </tr>
-                <?php if ( $posts_without_mcl_number_count > 0 ) { ?>
-                    <tr>
-                        <th scope="row"><?php _e( 'Posts', 'media-consumption-log' ); ?></th>
-                        <td><?php
-                            foreach ( $posts_without_mcl_number as $post_without_mcl_number ) {
-                                edit_post_link( $post_without_mcl_number->post_title, "", "", $post_without_mcl_number->ID );
-
-                                if ( $post_without_mcl_number != end( $posts_without_mcl_number ) ) {
-                                    echo "<br />";
-                                }
-                            }
-                            ?></td>
-                    </tr>   
-                <?php } ?>
-            </table>
-
-        </div>
-        <?php
+        return $data;
     }
 
     public static function build_data() {
@@ -119,6 +65,8 @@ class MclData {
         date_default_timezone_set( get_option( 'timezone_string' ) );
 
         $data = new stdClass;
+
+        $data->plugin_version = PLUGIN_VERSION;
 
         // Get the categories
         $monitored_categories_serials = MclSettings::get_monitored_categories_serials();
@@ -153,6 +101,7 @@ class MclData {
         // Get the number of days since first post
         $date_current = new DateTime( date( 'Y-m-d' ) );
         $number_of_days = $date_current->diff( $first_post_date )->format( "%a" ) + 1;
+        $data->number_of_days = $number_of_days;
 
         // Total consumption of category
         $consumption_total = 0;
@@ -160,9 +109,11 @@ class MclData {
 
         $tags_count_ongoing = 0;
         $tags_count_complete = 0;
+        $tags_count_abandoned = 0;
 
         $cat_serial_ongoing = false;
         $cat_serial_complete = false;
+        $cat_serial_abandoned = false;
         $cat_non_serial = false;
 
         $data->categories = array();
@@ -177,10 +128,12 @@ class MclData {
 
             $tags_count_ongoing += $category->mcl_tags_count_ongoing;
             $tags_count_complete += $category->mcl_tags_count_complete;
+            $tags_count_abandoned += $category->mcl_tags_count_abandoned;
 
             // Graph data
             $category->mcl_daily_data = self::get_mcl_number_count_of_category_sorted_by_day( $category->term_id, $first_date );
             $category->mcl_monthly_data = self::get_mcl_number_count_of_category_sorted_by_month( $category->term_id, $first_month );
+            $category->mcl_hourly_data = self::get_mcl_number_count_of_category_sorted_by_hour( $category->term_id );
             $category->mcl_consumption_total = self::get_total_mcl_mumber_count_of_category( $category->term_id );
             $category->mcl_consumption_average = $category->mcl_consumption_total / $number_of_days;
 
@@ -189,15 +142,19 @@ class MclData {
 
             $data->categories[] = $category;
 
-            if ( MclHelper::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_ongoing > 0 ) {
+            if ( MclHelpers::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_ongoing > 0 ) {
                 $cat_serial_ongoing = true;
             }
 
-            if ( MclHelper::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_complete > 0 ) {
-                $cat_serial_ongoing = true;
+            if ( MclHelpers::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_complete > 0 ) {
+                $cat_serial_complete = true;
             }
 
-            if ( MclHelper::is_monitored_non_serial_category( $category->term_id ) && $category->mcl_tags_count_ongoing > 0 ) {
+            if ( MclHelpers::is_monitored_serial_category( $category->term_id ) && $category->mcl_tags_count_abandoned > 0 ) {
+                $cat_serial_abandoned = true;
+            }
+
+            if ( MclHelpers::is_monitored_non_serial_category( $category->term_id ) && $category->mcl_tags_count_ongoing > 0 ) {
                 $cat_non_serial = true;
             }
         }
@@ -207,11 +164,15 @@ class MclData {
 
         $data->tags_count_ongoing = $tags_count_ongoing;
         $data->tags_count_complete = $tags_count_complete;
-        $data->tags_count_total = $tags_count_ongoing + $tags_count_complete;
+        $data->tags_count_abandoned = $tags_count_abandoned;
+        $data->tags_count_total = $tags_count_ongoing + $tags_count_complete + $tags_count_abandoned;
 
         $data->cat_serial_ongoing = $cat_serial_ongoing;
         $data->cat_serial_complete = $cat_serial_complete;
+        $data->cat_serial_abandoned = $cat_serial_abandoned;
         $data->cat_non_serial = $cat_non_serial;
+
+        $data->most_consumed = self::get_most_consumed();
 
         return $data;
     }
@@ -227,7 +188,7 @@ class MclData {
                 temp.post_id,
                 temp.post_date,
                 temp.post_title,
-                IFNULL(mcl.complete, 0) AS complete
+                IFNULL(mcl.status, 0) AS status
             FROM
 		(
                     SELECT
@@ -274,13 +235,15 @@ class MclData {
                                 AND dt2.term_id = t2.term_id)
                     ORDER BY name
                 ) AS temp
-            LEFT JOIN {$wpdb->prefix}mcl_complete AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
+            LEFT JOIN {$wpdb->prefix}mcl_status AS mcl ON temp.tag_id = mcl.tag_id AND temp.cat_id = mcl.cat_id
 	" );
 
         $tags_count_ongoing = 0;
         $tags_count_complete = 0;
+        $tags_count_abandoned = 0;
         $tags_ongoing = array();
         $tags_complete = array();
+        $tags_abandoned = array();
 
         foreach ( $tags as $tag ) {
             // Comma in tags
@@ -288,10 +251,12 @@ class MclData {
             // Get tag link
             $tag->tag_link = get_tag_link( $tag->tag_id );
 
-            // Get last post data
-            $tag->post_link = get_permalink( $tag->post_id );
+            // Get last post data, only of tag which are running
+            if ( $tag->status == MclSerialStatus::RUNNING ) {
+                $tag->post_link = get_permalink( $tag->post_id );
+            }
 
-            if ( $tag->complete == false ) {
+            if ( $tag->status == MclSerialStatus::RUNNING ) {
                 $tags_count_ongoing++;
 
                 // Tags which start with a number get their own group #
@@ -300,7 +265,7 @@ class MclData {
                 } else {
                     $tags_ongoing['#'][] = $tag;
                 }
-            } else {
+            } else if ( $tag->status == MclSerialStatus::COMPLETE ) {
                 $tags_count_complete++;
 
                 // Tags which start with a number get their own group #
@@ -309,15 +274,27 @@ class MclData {
                 } else {
                     $tags_complete['#'][] = $tag;
                 }
+            } else {
+                $tags_count_abandoned++;
+
+                // Tags which start with a number get their own group #
+                if ( preg_match( '/^[a-z]/i', trim( $tag->name[0] ) ) ) {
+                    $tags_abandoned[strtoupper( $tag->name[0] )][] = $tag;
+                } else {
+                    $tags_abandoned['#'][] = $tag;
+                }
             }
         }
 
         // Sort tag arrays
-        $category->mcl_tags_count = $tags_count_ongoing + $tags_count_complete;
         $category->mcl_tags_count_ongoing = $tags_count_ongoing;
         $category->mcl_tags_count_complete = $tags_count_complete;
+        $category->mcl_tags_count_abandoned = $tags_count_abandoned;
+        $category->mcl_tags_count = $tags_count_ongoing + $tags_count_complete + $tags_count_abandoned;
+
         $category->mcl_tags_ongoing = $tags_ongoing;
         $category->mcl_tags_complete = $tags_complete;
+        $category->mcl_tags_abandoned = $tags_abandoned;
 
         return $category;
     }
@@ -379,63 +356,92 @@ class MclData {
         return $stats[0]->number;
     }
 
-    private static function count_postmeta_orphans() {
+    private static function get_mcl_number_count_of_category_sorted_by_hour( $category_id ) {
         global $wpdb;
 
-        $postmeta_orphans = $wpdb->get_results( "
-            SELECT *
-            FROM {$wpdb->prefix}postmeta pm
-            LEFT JOIN {$wpdb->prefix}posts wp ON wp.ID = pm.post_id
-            WHERE wp.ID IS NULL
+        $stats = $wpdb->get_results( "
+            SELECT a.hour AS hour,
+                   IFNULL(b.number, 0) number
+            FROM
+              (SELECT 0 AS hour
+               UNION ALL SELECT 1
+               UNION ALL SELECT 2
+               UNION ALL SELECT 3
+               UNION ALL SELECT 4
+               UNION ALL SELECT 5
+               UNION ALL SELECT 6
+               UNION ALL SELECT 7
+               UNION ALL SELECT 8
+               UNION ALL SELECT 9
+               UNION ALL SELECT 10
+               UNION ALL SELECT 11
+               UNION ALL SELECT 12
+               UNION ALL SELECT 13
+               UNION ALL SELECT 14
+               UNION ALL SELECT 15
+               UNION ALL SELECT 16
+               UNION ALL SELECT 17
+               UNION ALL SELECT 18
+               UNION ALL SELECT 19
+               UNION ALL SELECT 20
+               UNION ALL SELECT 21
+               UNION ALL SELECT 22
+               UNION ALL SELECT 23
+              ) a
+            LEFT JOIN
+              (SELECT HOUR(post_date) as hour, SUM(meta_value) AS number
+               FROM {$wpdb->prefix}posts p
+               LEFT OUTER JOIN {$wpdb->prefix}term_relationships r ON r.object_id = p.ID
+               LEFT OUTER JOIN {$wpdb->prefix}postmeta m ON m.post_id = p.ID
+               WHERE (post_status = 'publish'
+                 AND post_type = 'post'
+                 AND meta_key = 'mcl_number')
+                 AND term_taxonomy_id = '{$category_id}'
+               GROUP BY HOUR(post_date)
+              ) b ON b.hour = a.hour
+            ORDER BY hour
 	" );
 
-        return count( $postmeta_orphans );
+        return $stats;
     }
 
-    private static function remove_postmeta_orphans() {
+    private static function get_most_consumed() {
         global $wpdb;
 
-        $wpdb->get_results( "
-            DELETE pm
-            FROM {$wpdb->prefix}postmeta pm
-            LEFT JOIN {$wpdb->prefix}posts wp ON wp.ID = pm.post_id
-            WHERE wp.ID IS NULL
-	" );
-    }
-
-    private static function get_posts_without_mcl_number() {
-        global $wpdb;
-
-        $monitored_categories_serials = MclSettings::get_monitored_categories_serials();
-        $monitored_categories_non_serials = MclSettings::get_monitored_categories_non_serials();
-
-        if ( !empty( $monitored_categories_serials ) && !empty( $monitored_categories_non_serials ) ) {
-            $monitored_categories = MclSettings::get_monitored_categories_serials() . "," . MclSettings::get_monitored_categories_non_serials();
-
-            $posts_without_mcl_number = $wpdb->get_results( "
-            SELECT *
-            FROM {$wpdb->prefix}posts as p
-            LEFT JOIN {$wpdb->prefix}term_relationships AS r ON p.ID = r.object_ID
-            LEFT JOIN {$wpdb->prefix}term_taxonomy AS t ON r.term_taxonomy_id = t.term_taxonomy_id
-            WHERE
-                p.post_type = 'post'
-                AND p.post_status = 'publish'
-                AND t.taxonomy = 'category'
-                AND t.term_id IN ({$monitored_categories})
-                AND NOT EXISTS (
-                    SELECT *
-                    FROM {$wpdb->prefix}postmeta
-                    WHERE meta_key = 'mcl_number'
-                    AND post_id = p.ID
-                )
+        $stats = $wpdb->get_results( "
+            SELECT terms2.term_id AS tag_id,
+                   t2.taxonomy AS taxonomy,
+                   terms2.name AS name,
+                   SUM(m1.meta_value) AS count,
+                   GROUP_CONCAT(DISTINCT r1.term_taxonomy_id
+                                ORDER BY r1.term_taxonomy_id) AS cats
+            FROM wp_posts p1
+            LEFT OUTER JOIN wp_term_relationships AS r1 ON p1.ID = r1.object_id
+            LEFT OUTER JOIN wp_postmeta AS m1 ON p1.ID = m1.post_id,
+                                                 wp_posts AS p2
+            LEFT JOIN wp_term_relationships AS r2 ON p2.ID = r2.object_ID
+            LEFT JOIN wp_term_taxonomy AS t2 ON r2.term_taxonomy_id = t2.term_taxonomy_id
+            LEFT JOIN wp_terms AS terms2 ON t2.term_id = terms2.term_id
+            WHERE p1.post_status = 'publish'
+              AND p1.post_type = 'post'
+              AND m1.meta_key = 'mcl_number'
+              AND r1.term_taxonomy_id IN (" . MclSettings::get_monitored_categories_serials() . ")
+              AND t2.taxonomy = 'post_tag'
+              AND p2.post_status = 'publish'
+              AND p1.ID = p2.ID
+            GROUP BY terms2.name
+            ORDER BY COUNT DESC
+            LIMIT " . MclSettings::get_statistics_most_consumed_count() . "
 	" );
 
-            return $posts_without_mcl_number;
-        } else {
-            return array();
+        foreach ( $stats as $tag ) {
+            // Comma in tags
+            $tag = MclCommaInTags::comma_tag_filter( $tag );
+            // Get tag link
+            $tag->tag_link = get_tag_link( $tag->tag_id );
         }
+
+        return $stats;
     }
 
 }
-
-?>
