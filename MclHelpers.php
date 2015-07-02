@@ -18,30 +18,38 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-class MclHelper {
+class MclHelpers {
 
     public static function build_all_categories_string( $categories, $with_id = false ) {
         $categories_string = "";
 
-        $forelast_cat = $categories[count( $categories ) - 2];
-        $last_cat = end( $categories );
+        if ( count( $categories ) == 1 ) {
+            $categories_string .= "{$categories[0]->name}";
 
-        foreach ( $categories as $category ) {
-            if ( $category != $last_cat ) {
-                $categories_string .= "{$category->name}";
+            if ( $with_id ) {
+                $categories_string .= " ({$categories[0]->term_id})";
+            }
+        } else {
+            $forelast_cat = $categories[count( $categories ) - 2];
+            $last_cat = end( $categories );
 
-                if ( $with_id ) {
-                    $categories_string .= " ({$category->term_id})";
-                }
+            foreach ( $categories as $category ) {
+                if ( $category != $last_cat ) {
+                    $categories_string .= "{$category->name}";
 
-                if ( $category != $forelast_cat ) {
-                    $categories_string .= ", ";
-                }
-            } else {
-                $categories_string .= " " . __( 'and', 'media-consumption-log' ) . " {$category->name}";
+                    if ( $with_id ) {
+                        $categories_string .= " ({$category->term_id})";
+                    }
 
-                if ( $with_id ) {
-                    $categories_string .= " ({$category->term_id})";
+                    if ( $category != $forelast_cat ) {
+                        $categories_string .= ", ";
+                    }
+                } else {
+                    $categories_string .= " " . __( 'and', 'media-consumption-log' ) . " {$category->name}";
+
+                    if ( $with_id ) {
+                        $categories_string .= " ({$category->term_id})";
+                    }
                 }
             }
         }
@@ -106,6 +114,33 @@ class MclHelper {
             return true;
         } else {
             return false;
+        }
+    }
+
+    public static function build_list_from_array( $data ) {
+        $data = array_values( array_unique( $data ) );
+
+        if ( count( $data ) == 1 ) {
+            return $data[0];
+        } else {
+            $list = "";
+
+            $forelast_entry = $data[count( $data ) - 2];
+            $last_entry = end( $data );
+
+            foreach ( $data as $entry ) {
+                if ( $entry != $last_entry ) {
+                    $list .= $entry;
+
+                    if ( $entry != $forelast_entry ) {
+                        $list .= ", ";
+                    }
+                } else {
+                    $list .= " " . __( 'and', 'media-consumption-log' ) . " {$entry}";
+                }
+            }
+
+            return $list;
         }
     }
 
